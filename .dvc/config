@@ -1,0 +1,5 @@
+[core]
+    analytics = false
+    remote = gcs-storage
+['remote "gcs-storage"']
+    url = gs://cybulde1/data/raw
