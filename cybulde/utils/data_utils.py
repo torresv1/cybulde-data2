@@ -25,7 +25,8 @@ def initialize_dvc() -> None:
 
 
 def initialize_dvc_storage(dvc_remote_name: str, dvc_remote_url: str) -> None:
-    if not run_shell_command("dvc remote list"):
+    existing_remotes = run_shell_command("dvc remote list").strip()
+    if dvc_remote_name not in existing_remotes:
         DATA_UTILS_LOGGER.info("Initializing DVC storage...")
         run_shell_command(
             f"dvc remote add -d {dvc_remote_name} {dvc_remote_url}"
@@ -40,10 +41,19 @@ def initialize_dvc_storage(dvc_remote_name: str, dvc_remote_url: str) -> None:
 
 
 def commit_to_dvc(dvc_raw_data_folder: str, dvc_remote_name: str) -> None:
-    current_version = run_shell_command(
-        "git tag --list | sort -t v -k 2 -g | tail 1 |sed 's/v//'"
-    ).strip()
-    if not current_version:
+    # Get all tags and find the highest version number
+    tags_output = run_shell_command("git tag --list").strip()
+    if tags_output:
+        tags = [tag.strip() for tag in tags_output.split('\n') if tag.strip().startswith('v')]
+        versions = []
+        for tag in tags:
+            try:
+                version_num = int(tag[1:])  # Remove 'v' prefix and convert to int
+                versions.append(version_num)
+            except ValueError:
+                continue
+        current_version = str(max(versions)) if versions else "0"
+    else:
         current_version = "0"
     next_version = f"v{int(current_version) + 1}"
     run_shell_command(f"dvc add {dvc_raw_data_folder}")
@@ -66,11 +76,20 @@ def commit_to_dvc(dvc_raw_data_folder: str, dvc_remote_name: str) -> None:
 def make_new_data_version(
     dvc_raw_data_folder: str, dvc_remote_name: str
 ) -> None:
-    try:
-        status = run_shell_command(f"dvc status {dvc_raw_data_folder}.dvc")
-        if status == "Data and pipelines are up to date.\n":
-            DATA_UTILS_LOGGER.info("Data and pipelines are up to date. ")
-            return
+    dvc_file = f"{dvc_raw_data_folder}.dvc"
+    dvc_file_exists = Path(dvc_file).exists()
+
+    if not dvc_file_exists:
+        DATA_UTILS_LOGGER.info(f"No DVC file found at {dvc_file}. Creating initial version...")
         commit_to_dvc(dvc_raw_data_folder, dvc_remote_name)
-    except CalledProcessError:
+        return
+    try:
+        status = run_shell_command(f"dvc status {dvc_file}").strip()
+        if "Data and pipelines are up to date" in status:
+            DATA_UTILS_LOGGER.info("Data and pipelines are up to date.")
+            return
+        DATA_UTILS_LOGGER.info(f"DVC status: {status}")
+        commit_to_dvc(dvc_raw_data_folder, dvc_remote_name)
+    except CalledProcessError as e:
+        DATA_UTILS_LOGGER.error(f"Error checking DVC status: {e}")
         commit_to_dvc(dvc_raw_data_folder, dvc_remote_name)

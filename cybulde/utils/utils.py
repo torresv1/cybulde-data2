@@ -8,4 +8,8 @@ def get_logger(name: str) -> logging.Logger:
 
 
 def run_shell_command(cmd: str) -> str:
-    return subprocess.run(cmd, shell=True, capture_output=True, text=True).stdout
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    if result.returncode != 0 and result.stderr:
+        logger = get_logger(__name__)
+        logger.warning(f"Command '{cmd}' returned non-zero exit code {result.returncode}: {result.stderr}")
+    return result.stdout
