@@ -5,7 +5,7 @@ from pydantic.dataclasses import dataclass
 @dataclass
 class Config:
     dvc_remote_name: str = "gcs-storage"  # Name of the DVC remote
-    dvc_remote_url: str = "gs://cybulde1/"  # Google Cloud Storage bucket URL
+    dvc_remote_url: str = "gs://cybulde1/data/raw"  # Google Cloud Storage bucket URL
     dvc_raw_data_folder: str = "data/raw"
 
 
