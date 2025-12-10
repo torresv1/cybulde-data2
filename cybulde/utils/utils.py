@@ -1,10 +1,11 @@
-import socket
 import logging
+import socket
 import subprocess
 
 
 def get_logger(name: str) -> logging.Logger:
     return logging.getLogger(f"[{socket.gethostname()}] {name}")
+
 
 # A simple utility to run shell commands
 

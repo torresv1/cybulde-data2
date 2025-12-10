@@ -1,4 +1,3 @@
-
 from pathlib import Path
 from subprocess import CalledProcessError
 
@@ -28,13 +27,9 @@ def initialize_dvc_storage(dvc_remote_name: str, dvc_remote_url: str) -> None:
     existing_remotes = run_shell_command("dvc remote list").strip()
     if dvc_remote_name not in existing_remotes:
         DATA_UTILS_LOGGER.info("Initializing DVC storage...")
-        run_shell_command(
-            f"dvc remote add -d {dvc_remote_name} {dvc_remote_url}"
-        )
+        run_shell_command(f"dvc remote add -d {dvc_remote_name} {dvc_remote_url}")
         run_shell_command("git add .dvc/config")
-        run_shell_command(
-            f"git commit -nm 'Configured remote storage at: {dvc_remote_url}'"
-        )
+        run_shell_command(f"git commit -nm 'Configured remote storage at: {dvc_remote_url}'")
     else:
         DATA_UTILS_LOGGER.info("DVC storage was already initialized.")
         return
@@ -44,7 +39,7 @@ def commit_to_dvc(dvc_raw_data_folder: str, dvc_remote_name: str) -> None:
     # Get all tags and find the highest version number
     tags_output = run_shell_command("git tag --list").strip()
     if tags_output:
-        tags = [tag.strip() for tag in tags_output.split('\n') if tag.strip().startswith('v')]
+        tags = [tag.strip() for tag in tags_output.split("\n") if tag.strip().startswith("v")]
         versions = []
         for tag in tags:
             try:
@@ -58,24 +53,14 @@ def commit_to_dvc(dvc_raw_data_folder: str, dvc_remote_name: str) -> None:
     next_version = f"v{int(current_version) + 1}"
     run_shell_command(f"dvc add {dvc_raw_data_folder}")
     run_shell_command("git add .")
-    run_shell_command(
-        f"git commit -nm 'Updated version of the data from "
-        f"v{current_version} to {next_version}'"
-    )
-    run_shell_command(
-        f"git tag -a {next_version} -m 'Data version {next_version}'"
-    )
-    run_shell_command(
-        f"dvc push {dvc_raw_data_folder}.dvc "
-        f"--remote {dvc_remote_name}"
-    )
+    run_shell_command(f"git commit -nm 'Updated version of the data from " f"v{current_version} to {next_version}'")
+    run_shell_command(f"git tag -a {next_version} -m 'Data version {next_version}'")
+    run_shell_command(f"dvc push {dvc_raw_data_folder}.dvc " f"--remote {dvc_remote_name}")
     run_shell_command("git push --follow-tags")
     run_shell_command("git push -f --tags")
 
 
-def make_new_data_version(
-    dvc_raw_data_folder: str, dvc_remote_name: str
-) -> None:
+def make_new_data_version(dvc_raw_data_folder: str, dvc_remote_name: str) -> None:
     dvc_file = f"{dvc_raw_data_folder}.dvc"
     dvc_file_exists = Path(dvc_file).exists()
 

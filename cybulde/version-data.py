@@ -1,4 +1,3 @@
-
 from cybulde.config_schemas.config_schema import Config
 from cybulde.utils.config_utils import get_config
 from cybulde.utils.data_utils import initialize_dvc, initialize_dvc_storage, make_new_data_version
@@ -14,4 +13,4 @@ def version_data(config: Config) -> None:
 
 
 if __name__ == "__main__":
-    version_data()  # type: ignore
+    version_data()
